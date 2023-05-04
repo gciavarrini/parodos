@@ -1,6 +1,6 @@
 package com.redhat.parodos.examples.integration;
 
-import com.redhat.parodos.examples.integration.utils.ExamplesUtils;
+import com.redhat.parodos.sdkutils.SdkUtils;
 import com.redhat.parodos.sdk.api.WorkflowApi;
 import com.redhat.parodos.sdk.api.WorkflowDefinitionApi;
 import com.redhat.parodos.sdk.invoker.ApiClient;
@@ -39,8 +39,7 @@ public class KubeapiWorkFlow {
 		defaultClient.addDefaultHeader(HttpHeaders.AUTHORIZATION, "Basic " + CredUtils.getBase64Creds("test", "test"));
 
 		try {
-			ProjectResponseDTO testProject = ExamplesUtils.getProjectAsync(defaultClient, projectName,
-					projectDescription);
+			ProjectResponseDTO testProject = SdkUtils.getProjectAsync(defaultClient, projectName, projectDescription);
 
 			// GET workflow DEFINITIONS
 			WorkflowDefinitionApi workflowDefinitionApi = new WorkflowDefinitionApi(defaultClient);

@@ -1,17 +1,16 @@
 package com.redhat.parodos.examples.integration;
 
-import com.redhat.parodos.examples.integration.utils.ExamplesUtils;
 import com.redhat.parodos.sdk.api.WorkflowApi;
 import com.redhat.parodos.sdk.api.WorkflowDefinitionApi;
 import com.redhat.parodos.sdk.invoker.ApiClient;
 import com.redhat.parodos.sdk.invoker.ApiException;
 import com.redhat.parodos.sdk.invoker.Configuration;
+import com.redhat.parodos.sdk.model.ArgumentRequestDTO;
 import com.redhat.parodos.sdk.model.ProjectResponseDTO;
 import com.redhat.parodos.sdk.model.WorkFlowDefinitionResponseDTO;
-import com.redhat.parodos.sdk.model.WorkRequestDTO;
-import com.redhat.parodos.sdk.model.ArgumentRequestDTO;
 import com.redhat.parodos.sdk.model.WorkFlowRequestDTO;
 import com.redhat.parodos.sdk.model.WorkFlowResponseDTO;
+import com.redhat.parodos.sdk.model.WorkRequestDTO;
 import com.redhat.parodos.workflow.consts.WorkFlowConstants;
 import com.redhat.parodos.workflow.enums.WorkFlowType;
 import com.redhat.parodos.workflow.enums.WorkType;
@@ -26,9 +25,10 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertNull;
+import static com.redhat.parodos.sdkutils.SdkUtils.getProjectAsync;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 @Slf4j
@@ -53,7 +53,7 @@ public class PrebuiltWorkFlow {
 
 		log.info("Running pre-built flow (name: {})", workFlowName);
 
-		ProjectResponseDTO testProject = ExamplesUtils.getProjectAsync(apiClient, projectName, projectDescription);
+		ProjectResponseDTO testProject = getProjectAsync(apiClient, projectName, projectDescription);
 
 		// GET preBuiltWorkFlow DEFINITIONS
 		WorkflowDefinitionApi workflowDefinitionApi = new WorkflowDefinitionApi(apiClient);

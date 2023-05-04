@@ -17,8 +17,8 @@ import org.springframework.http.HttpHeaders;
 
 import java.io.IOException;
 
-import static com.redhat.parodos.examples.integration.utils.ExamplesUtils.getProjectAsync;
-import static com.redhat.parodos.examples.integration.utils.ExamplesUtils.waitWorkflowStatusAsync;
+import static com.redhat.parodos.sdkutils.SdkUtils.getProjectAsync;
+import static com.redhat.parodos.sdkutils.SdkUtils.waitWorkflowStatusAsync;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 

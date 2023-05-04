@@ -1,6 +1,5 @@
 package com.redhat.parodos.examples.integration;
 
-import com.redhat.parodos.examples.integration.utils.ExamplesUtils;
 import com.redhat.parodos.sdk.api.WorkflowApi;
 import com.redhat.parodos.sdk.api.WorkflowDefinitionApi;
 import com.redhat.parodos.sdk.invoker.ApiClient;
@@ -24,7 +23,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.redhat.parodos.examples.integration.utils.ExamplesUtils.waitWorkflowStatusAsync;
+import static com.redhat.parodos.sdkutils.SdkUtils.getProjectAsync;
+import static com.redhat.parodos.sdkutils.SdkUtils.waitWorkflowStatusAsync;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -52,7 +52,7 @@ public class ComplexWorkFlow {
 	public void runComplexWorkFlow() throws ApiException, InterruptedException {
 		log.info("Running complex flow");
 
-		ProjectResponseDTO testProject = ExamplesUtils.getProjectAsync(apiClient, projectName, projectDescription);
+		ProjectResponseDTO testProject = getProjectAsync(apiClient, projectName, projectDescription);
 
 		WorkflowApi workflowApi = new WorkflowApi();
 		log.info("******** Running The Complex WorkFlow ********");

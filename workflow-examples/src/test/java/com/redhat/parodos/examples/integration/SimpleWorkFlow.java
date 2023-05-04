@@ -1,6 +1,5 @@
 package com.redhat.parodos.examples.integration;
 
-import com.redhat.parodos.examples.integration.utils.ExamplesUtils;
 import com.redhat.parodos.sdk.api.WorkflowApi;
 import com.redhat.parodos.sdk.api.WorkflowDefinitionApi;
 import com.redhat.parodos.sdk.invoker.ApiClient;
@@ -13,6 +12,7 @@ import com.redhat.parodos.sdk.model.WorkFlowRequestDTO;
 import com.redhat.parodos.sdk.model.WorkFlowResponseDTO;
 import com.redhat.parodos.sdk.model.WorkFlowResponseDTO.WorkStatusEnum;
 import com.redhat.parodos.sdk.model.WorkRequestDTO;
+import com.redhat.parodos.sdkutils.SdkUtils;
 import com.redhat.parodos.workflow.consts.WorkFlowConstants;
 import com.redhat.parodos.workflow.enums.WorkFlowType;
 import com.redhat.parodos.workflow.enums.WorkType;
@@ -55,7 +55,7 @@ public class SimpleWorkFlow {
 	public void runSimpleWorkFlow() throws ApiException, InterruptedException {
 		log.info("Running simple flow");
 
-		ProjectResponseDTO testProject = ExamplesUtils.getProjectAsync(apiClient, projectName, projectDescription);
+		ProjectResponseDTO testProject = SdkUtils.getProjectAsync(apiClient, projectName, projectDescription);
 
 		// GET simpleSequentialWorkFlow DEFINITIONS
 		WorkflowDefinitionApi workflowDefinitionApi = new WorkflowDefinitionApi();

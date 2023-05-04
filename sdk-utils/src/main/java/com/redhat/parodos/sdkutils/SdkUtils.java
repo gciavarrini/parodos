@@ -1,42 +1,99 @@
+package com.redhat.parodos.sdkutils;
 
-package com.redhat.parodos.examples.integration.utils;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
+import com.google.common.base.Strings;
+import com.redhat.parodos.sdk.api.LoginApi;
+import com.redhat.parodos.sdk.api.ProjectApi;
+import com.redhat.parodos.sdk.api.WorkflowApi;
+import com.redhat.parodos.sdk.invoker.ApiCallback;
 import com.redhat.parodos.sdk.invoker.ApiClient;
+import com.redhat.parodos.sdk.invoker.ApiException;
+import com.redhat.parodos.sdk.invoker.ApiResponse;
+import com.redhat.parodos.sdk.invoker.Configuration;
 import com.redhat.parodos.sdk.model.ProjectRequestDTO;
+import com.redhat.parodos.sdk.model.ProjectResponseDTO;
+import com.redhat.parodos.sdk.model.WorkFlowStatusResponseDTO;
+import com.redhat.parodos.workflow.utils.CredUtils;
+import com.redhat.parodos.workflows.work.WorkStatus;
+import lombok.Data;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.env.MissingRequiredPropertiesException;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import javax.annotation.Nullable;
-
-import com.redhat.parodos.sdk.api.ProjectApi;
-import com.redhat.parodos.sdk.api.WorkflowApi;
-import com.redhat.parodos.sdk.invoker.ApiCallback;
-import com.redhat.parodos.sdk.invoker.ApiException;
-import com.redhat.parodos.sdk.model.WorkFlowStatusResponseDTO;
-import com.redhat.parodos.workflows.work.WorkStatus;
-import org.assertj.core.util.Strings;
-import com.redhat.parodos.sdk.model.ProjectResponseDTO;
-import lombok.Data;
+import java.util.stream.Stream;
 
 /***
- * A utility
- *
- * class to ease the writing of new examples.
+ * A utility class to ease the writing of new examples.
  */
 
 @Slf4j
-public final class ExamplesUtils {
+public final class SdkUtils {
+
+	/**
+	 * Creates and configures the APIClient using the configuration properties available
+	 * in `application.yml`
+	 * @return the ApiClient
+	 */
+	public static ApiClient getParodosAPiClient() throws ApiException, MissingRequiredPropertiesException {
+		ApiClient apiClient = Configuration.getDefaultApiClient();
+		CustomPropertiesReader reader = new CustomPropertiesReader();
+		String serverIp = reader.getServerIp();
+		String serverPort = reader.getServerPort();
+
+		if (Strings.isNullOrEmpty(serverIp) || Strings.isNullOrEmpty(serverPort)) {
+			throw new MissingRequiredPropertiesException();
+		}
+
+		int port = Integer.parseInt(serverPort);
+		if (port <= 0 && port > 65535) {
+			throw new IllegalArgumentException("serverPort must be > 0 && <= 65535");
+		}
+
+		String basePath = "http://" + serverIp + ":" + serverPort;
+		log.info("serverIp is: {}, serverPort is {}. Set BasePath to {}", serverIp, serverPort, basePath);
+
+		apiClient.setBasePath(basePath);
+		apiClient.addDefaultHeader("Authorization", "Basic " + CredUtils.getBase64Creds("test", "test"));
+
+		// Need to execute a GET method to get JSessionId and CSRF Token
+		LoginApi loginApi = new LoginApi(apiClient);
+		ApiResponse<Void> loginResponse = loginApi.loginWithHttpInfo();
+		Map<String, List<String>> headers = loginResponse.getHeaders();
+		List<String> cookieHeaders = headers.get("Set-Cookie");
+		String xsrfToken = null;
+		String JSessionID = null;
+		if (cookieHeaders != null) {
+			xsrfToken = getCookieValue(cookieHeaders, xsrfToken, "XSRF-TOKEN");
+			JSessionID = getCookieValue(cookieHeaders, JSessionID, "JSESSIONID");
+		}
+
+		log.debug("Found X-CSRF-TOKEN: {} and JSessionID: {}", xsrfToken, JSessionID);
+		if (xsrfToken != null) {
+			apiClient.addDefaultHeader("X-XSRF-TOKEN", xsrfToken);
+			apiClient.addDefaultCookie("JSESSIONID", JSessionID);
+			apiClient.addDefaultCookie("XSRF-TOKEN", xsrfToken);
+		}
+		return apiClient;
+	}
+
+	@org.jetbrains.annotations.Nullable
+	private static String getCookieValue(List<String> cookieHeaders, String xsrfToken, String anObject) {
+		for (String cookieHeader : cookieHeaders) {
+			xsrfToken = Stream.of(cookieHeader.split(";")).map(cookie -> cookie.trim().split("="))
+					.filter(parts -> parts.length == 2 && parts[0].equals(anObject)).findFirst().map(parts -> parts[1])
+					.orElse(null);
+			if (xsrfToken != null) {
+				break;
+			}
+		}
+		return xsrfToken;
+	}
 
 	/**
 	 * Executes a @see FuncExecutor. Waits at most 60 seconds for a successful result of
@@ -55,7 +112,7 @@ public final class ExamplesUtils {
 
 			@Override
 			public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
-
+				log.info("onFailure {}", e.getMessage());
 				try {
 					f.execute(this);
 				}
@@ -108,7 +165,8 @@ public final class ExamplesUtils {
 			// should be more than enough
 			response.await(60, TimeUnit.SECONDS);
 			if (asyncResult.getError() != null) {
-				fail("An error occurred while executing waitAsyncResponse: " + asyncResult.getError());
+				throw new ApiException(
+						"An error occurred while executing waitAsyncResponse: " + asyncResult.getError());
 			}
 		}
 		finally {
@@ -218,7 +276,7 @@ public final class ExamplesUtils {
 	public static ProjectResponseDTO getProjectAsync(ApiClient apiClient, String projectName, String projectDescription)
 			throws InterruptedException, ApiException {
 		ProjectApi projectApi = new ProjectApi(apiClient);
-
+		log.info("Wait project to be ready on {}", apiClient.getBasePath());
 		waitProjectStart(projectApi);
 		log.info("Project is ✔️ on {}", apiClient.getBasePath());
 
@@ -227,6 +285,7 @@ public final class ExamplesUtils {
 		// RETRIEVE ALL PROJECTS AVAILABLE
 		log.info("Get all available projects");
 		List<ProjectResponseDTO> projects = projectApi.getProjects();
+
 		// CHECK IF testProject ALREADY EXISTS
 		testProject = getProjectByNameAndDescription(projects, projectName, projectDescription);
 
@@ -239,19 +298,30 @@ public final class ExamplesUtils {
 			projectRequestDTO.setDescription(projectDescription);
 
 			ProjectResponseDTO projectResponseDTO = projectApi.createProject(projectRequestDTO);
-			assertNotNull(projectResponseDTO);
-			assertEquals(projectName, projectResponseDTO.getName());
-			assertEquals(projectDescription, projectResponseDTO.getDescription());
+			if (projectResponseDTO == null || projectResponseDTO.getName() == null
+					|| projectResponseDTO.getDescription() == null) {
+				throw new ApiException("Can't create new project");
+			}
+			if (!projectName.equals(projectResponseDTO.getName())
+					|| !projectDescription.equals(projectResponseDTO.getDescription())) {
+				throw new ApiException("Can't create project correctly. Requested project name and description are: "
+						+ projectName + "," + projectDescription + ". Actual are: " + projectResponseDTO.getName()
+						+ projectResponseDTO.getDescription());
+			}
 			log.info("Project {} successfully created", projectName);
 		}
 
 		// ASSERT PROJECT "testProject" IS PRESENT
 		projects = projectApi.getProjects();
 		log.debug("PROJECTS: {}", projects);
-		assertTrue(projects.size() > 0);
+		if (projects.isEmpty()) {
+			throw new ApiException("Project has not been created.");
+		}
 		testProject = getProjectByNameAndDescription(projects, projectName, projectDescription);
-		assertNotNull(testProject);
 
+		if (testProject == null) {
+			throw new ApiException("Can retrieve project with name " + projectName);
+		}
 		return testProject;
 	}
 
