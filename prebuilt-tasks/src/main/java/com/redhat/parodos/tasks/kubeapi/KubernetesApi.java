@@ -2,18 +2,19 @@ package com.redhat.parodos.tasks.kubeapi;
 
 import java.io.IOException;
 
+import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.util.generic.dynamic.DynamicKubernetesObject;
 
 interface KubernetesApi {
 
-	DynamicKubernetesObject get(String kubeconfig, String apiGroup, String apiVersion, String kindPluralName,
+	DynamicKubernetesObject get(ApiClient client, String apiGroup, String apiVersion, String kindPluralName,
 			String namespace, String name) throws ApiException, IOException;
 
-	void create(String kubeconfig, String apiGroup, String apiVersion, String kindPluralName,
+	void create(ApiClient client, String apiGroup, String apiVersion, String kindPluralName,
 			DynamicKubernetesObject obj) throws ApiException, IOException;
 
-	void update(String kubeconfig, String apiGroup, String apiVersion, String kindPluralName,
+	void update(ApiClient client, String apiGroup, String apiVersion, String kindPluralName,
 			DynamicKubernetesObject obj) throws ApiException, IOException;
 
 }

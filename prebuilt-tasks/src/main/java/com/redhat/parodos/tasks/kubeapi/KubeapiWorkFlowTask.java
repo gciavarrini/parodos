@@ -1,6 +1,7 @@
 package com.redhat.parodos.tasks.kubeapi;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -16,8 +17,10 @@ import com.redhat.parodos.workflows.work.DefaultWorkReport;
 import com.redhat.parodos.workflows.work.WorkContext;
 import com.redhat.parodos.workflows.work.WorkReport;
 import com.redhat.parodos.workflows.work.WorkStatus;
+import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
-import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.util.ClientBuilder;
+import io.kubernetes.client.util.KubeConfig;
 import io.kubernetes.client.util.generic.dynamic.DynamicKubernetesObject;
 import io.kubernetes.client.util.generic.dynamic.Dynamics;
 import lombok.NonNull;
@@ -33,7 +36,17 @@ public class KubeapiWorkFlowTask extends BaseWorkFlowTask {
 
 	static public enum OperationType {
 
-		GET, CREATE, UPDATE
+		CREATE("create"), UPDATE("update"), GET("get");
+
+		private String strOp;
+
+		private OperationType(String strOp) {
+			this.strOp = strOp;
+		}
+
+		public String toString() {
+			return this.strOp;
+		}
 
 	};
 
@@ -51,7 +64,7 @@ public class KubeapiWorkFlowTask extends BaseWorkFlowTask {
 	@Override
 	public @NonNull List<WorkParameter> getWorkFlowTaskParameters() {
 		LinkedList<WorkParameter> params = new LinkedList<>();
-		params.add(WorkParameter.builder().key("kubeconfig-json").type(WorkParameterType.TEXT).optional(false)
+		params.add(WorkParameter.builder().key("kubeconfig-json").type(WorkParameterType.TEXT).optional(true)
 				.description("kubeconfig in json format").build());
 		params.add(WorkParameter.builder().key("api-group").type(WorkParameterType.TEXT).optional(false)
 				.description("API group of resource").build());
@@ -83,24 +96,31 @@ public class KubeapiWorkFlowTask extends BaseWorkFlowTask {
 
 		try {
 			// Get the required parameters
-			String kubeconfigJson = getRequiredParameterValue(workContext, "kubeconfig-json");
+			String kubeconfigJson = getOptionalParameterValue(workContext, "kubeconfig-json", null);
 			String apiGroup = getRequiredParameterValue(workContext, "api-group");
 			String apiVersion = getRequiredParameterValue(workContext, "api-version");
 			String kindPluralName = getRequiredParameterValue(workContext, "kind-plural-name");
 			operation = getRequiredParameterValue(workContext, "operation");
 
-			String kubeconfig = new YAMLMapper().writeValueAsString(new ObjectMapper().readTree(kubeconfigJson));
+			ApiClient client;
+			if (kubeconfigJson != null) {
+				String kubeConfig = new YAMLMapper().writeValueAsString(new ObjectMapper().readTree(kubeconfigJson));
+				client = ClientBuilder.kubeconfig(KubeConfig.loadKubeConfig(new StringReader(kubeConfig))).build();
+			}
+			else {
+				client = ClientBuilder.defaultClient();
+			}
 			OperationType operationType = OperationType.valueOf(operation.toUpperCase());
 
 			switch (operationType) {
 				case UPDATE:
-					update(workContext, kubeconfig, apiGroup, apiVersion, kindPluralName);
+					update(workContext, client, apiGroup, apiVersion, kindPluralName);
 					break;
 				case CREATE:
-					create(workContext, kubeconfig, apiGroup, apiVersion, kindPluralName);
+					create(workContext, client, apiGroup, apiVersion, kindPluralName);
 					break;
 				case GET:
-					get(workContext, kubeconfig, apiGroup, apiVersion, kindPluralName);
+					get(workContext, client, apiGroup, apiVersion, kindPluralName);
 					break;
 			}
 		}
@@ -112,37 +132,35 @@ public class KubeapiWorkFlowTask extends BaseWorkFlowTask {
 		return new DefaultWorkReport(WorkStatus.COMPLETED, workContext);
 	}
 
-	private void get(WorkContext ctx, String kubeconfig, String apiGroup, String apiVersion, String kindPluralName)
+	private void get(WorkContext ctx, ApiClient client, String apiGroup, String apiVersion, String kindPluralName)
 			throws MissingParameterException, ApiException, IOException {
 		String resourceName = getRequiredParameterValue(ctx, "resource-name");
 		String resourceNamespace = getRequiredParameterValue(ctx, "resource-namespace");
 		String workCtxKey = getRequiredParameterValue(ctx, "work-ctx-key");
 
-		DynamicKubernetesObject obj = api.get(kubeconfig, apiGroup, apiVersion, kindPluralName, resourceNamespace,
+		DynamicKubernetesObject obj = api.get(client, apiGroup, apiVersion, kindPluralName, resourceNamespace,
 				resourceName);
 		String resourceJson = obj.getRaw().toString();
 		ctx.put(workCtxKey, resourceJson);
 	}
 
-	private void create(WorkContext ctx, String kubeconfig, String apiGroup, String apiVersion, String kindPluralName)
+	private void create(WorkContext ctx, ApiClient client, String apiGroup, String apiVersion, String kindPluralName)
 			throws MissingParameterException, ApiException, IOException {
 		String resourceJson = getRequiredParameterValue(ctx, "resource-json");
 		DynamicKubernetesObject obj = Dynamics.newFromJson(resourceJson);
-		api.create(kubeconfig, apiGroup, apiVersion, kindPluralName, obj);
+		api.create(client, apiGroup, apiVersion, kindPluralName, obj);
 	}
 
-	private void update(WorkContext ctx, String kubeconfig, String apiGroup, String apiVersion, String kindPluralName)
+	private void update(WorkContext ctx, ApiClient client, String apiGroup, String apiVersion, String kindPluralName)
 			throws MissingParameterException, ApiException, IOException {
 		String resourceJson = getRequiredParameterValue(ctx, "resource-json");
 		DynamicKubernetesObject newObj = Dynamics.newFromJson(resourceJson);
 		String resourceNamespace = newObj.getMetadata().getNamespace();
 		String resourceName = newObj.getMetadata().getName();
-		DynamicKubernetesObject currObj = api.get(kubeconfig, apiGroup, apiVersion, kindPluralName, resourceNamespace,
+		DynamicKubernetesObject currObj = api.get(client, apiGroup, apiVersion, kindPluralName, resourceNamespace,
 				resourceName);
-		V1ObjectMeta metadata = newObj.getMetadata();
-		metadata.setResourceVersion(currObj.getMetadata().getResourceVersion());
-		newObj.setMetadata(metadata);
-		api.update(kubeconfig, apiGroup, apiVersion, kindPluralName, newObj);
+		newObj.setMetadata(currObj.getMetadata());
+		api.update(client, apiGroup, apiVersion, kindPluralName, newObj);
 	}
 
 }
