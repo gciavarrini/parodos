@@ -169,7 +169,7 @@ public abstract class SdkUtils {
 		lock.lock();
 		try {
 			// should be more than enough
-			response.await(60, TimeUnit.SECONDS);
+			response.await(10, TimeUnit.SECONDS);
 			if (asyncResult.getError() != null) {
 				throw new ApiException(
 						"An error occurred while executing waitAsyncResponse: " + asyncResult.getError());
