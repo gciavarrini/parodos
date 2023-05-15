@@ -1,17 +1,21 @@
 package com.redhat.parodos.flows;
 
 import java.util.Arrays;
+import java.util.List;
 
 import com.redhat.parodos.flows.base.BaseIntegrationTest;
 import com.redhat.parodos.sdk.api.WorkflowApi;
+import com.redhat.parodos.sdk.api.WorkflowDefinitionApi;
 import com.redhat.parodos.sdk.invoker.ApiException;
 import com.redhat.parodos.sdk.model.ProjectResponseDTO;
+import com.redhat.parodos.sdk.model.WorkFlowDefinitionResponseDTO;
 import com.redhat.parodos.sdk.model.WorkFlowRequestDTO;
 import com.redhat.parodos.sdk.model.WorkFlowResponseDTO;
 import com.redhat.parodos.sdk.model.WorkFlowResponseDTO.WorkStatusEnum;
 import com.redhat.parodos.sdk.model.WorkFlowStatusResponseDTO;
 import com.redhat.parodos.sdk.model.WorkRequestDTO;
 import com.redhat.parodos.sdkutils.SdkUtils;
+import com.redhat.parodos.workflow.consts.WorkFlowConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 
@@ -34,12 +38,12 @@ public class VMMigrationWorkFlow extends BaseIntegrationTest {
 
 		ProjectResponseDTO testProject = SdkUtils.getProjectAsync(apiClient, projectName, projectDescription);
 
-		// // GET simpleSequentialWorkFlow DEFINITIONS
-		// WorkflowDefinitionApi workflowDefinitionApi = new WorkflowDefinitionApi();
-		// List<WorkFlowDefinitionResponseDTO> workFlowDefinitions = workflowDefinitionApi
-		// .getWorkFlowDefinitions("vmMigrationWorkFlow" +
-		// WorkFlowConstants.INFRASTRUCTURE_WORKFLOW);
-		// assertEquals(1, workFlowDefinitions.size());
+		 // GET simpleSequentialWorkFlow DEFINITIONS
+		 WorkflowDefinitionApi workflowDefinitionApi = new WorkflowDefinitionApi();
+		 List<WorkFlowDefinitionResponseDTO> workFlowDefinitions = workflowDefinitionApi
+		 .getWorkFlowDefinitions("vmMigrationWorkFlow" +
+		 WorkFlowConstants.INFRASTRUCTURE_WORKFLOW);
+		 assertEquals(1, workFlowDefinitions.size());
 
 		// // GET WORKFLOW DEFINITION BY Id
 		// WorkFlowDefinitionResponseDTO workFlowDefinition = workflowDefinitionApi
@@ -71,7 +75,7 @@ public class VMMigrationWorkFlow extends BaseIntegrationTest {
 		// Define WorkFlowRequest
 		WorkFlowRequestDTO workFlowRequestDTO = new WorkFlowRequestDTO();
 		workFlowRequestDTO.setProjectId(testProject.getId());
-		workFlowRequestDTO.setWorkFlowName("vmMigrationWorkFlow_INFRASTRUCTURE_WORKFLOW");
+		workFlowRequestDTO.setWorkFlowName("vmMigrationWorkFlow" + WorkFlowConstants.INFRASTRUCTURE_WORKFLOW);
 		workFlowRequestDTO.setWorks(Arrays.asList(work1, work2));
 
 		WorkflowApi workflowApi = new WorkflowApi();
@@ -79,13 +83,17 @@ public class VMMigrationWorkFlow extends BaseIntegrationTest {
 
 		WorkFlowResponseDTO workFlowResponseDTO = workflowApi.execute(workFlowRequestDTO);
 
+		assertNotNull(workFlowResponseDTO);
 		assertNotNull(workFlowResponseDTO.getWorkFlowExecutionId());
 		assertNotNull(workFlowResponseDTO.getWorkStatus());
 		assertEquals(WorkStatusEnum.IN_PROGRESS, workFlowResponseDTO.getWorkStatus());
 
+		WorkFlowStatusResponseDTO status = workflowApi.getStatus(workFlowResponseDTO.getWorkFlowExecutionId());
+		log.info("Status is {}", status);
 		WorkFlowStatusResponseDTO workFlowStatusResponseDTO = SdkUtils.waitWorkflowStatusAsync(workflowApi,
 				workFlowResponseDTO.getWorkFlowExecutionId());
 
+		assertNotNull(workFlowStatusResponseDTO);
 		assertNotNull(workFlowStatusResponseDTO.getWorkFlowExecutionId());
 		assertNotNull(workFlowStatusResponseDTO.getStatus());
 		assertEquals(WorkStatusEnum.COMPLETED, workFlowStatusResponseDTO.getStatus());
