@@ -61,18 +61,20 @@ public class SimpleWorkFlow extends BaseIntegrationTest {
 				simpleSequentialWorkFlowDefinition.getName());
 		assertEquals(WorkFlowDefinitionResponseDTO.ProcessingTypeEnum.SEQUENTIAL,
 				simpleSequentialWorkFlowDefinition.getProcessingType());
-		assertEquals(WorkFlowType.INFRASTRUCTURE.toString(), simpleSequentialWorkFlowDefinition.getType());
+		assertEquals(WorkFlowType.INFRASTRUCTURE.toString(), simpleSequentialWorkFlowDefinition.getType().toString());
 
 		assertNotNull(simpleSequentialWorkFlowDefinition.getWorks());
 		assertEquals(2, simpleSequentialWorkFlowDefinition.getWorks().size());
 		assertEquals("restCallTask", simpleSequentialWorkFlowDefinition.getWorks().get(0).getName());
-		assertEquals(WorkType.TASK.toString(), simpleSequentialWorkFlowDefinition.getWorks().get(0).getWorkType());
+		assertEquals(WorkType.TASK.toString(),
+				simpleSequentialWorkFlowDefinition.getWorks().get(0).getWorkType().toString());
 		assertTrue(CollectionUtils.isEmpty(simpleSequentialWorkFlowDefinition.getWorks().get(0).getWorks()));
 		assertNull(simpleSequentialWorkFlowDefinition.getWorks().get(0).getProcessingType());
 		assertNotNull(simpleSequentialWorkFlowDefinition.getWorks().get(0).getParameters());
 
 		assertEquals("loggingTask", simpleSequentialWorkFlowDefinition.getWorks().get(1).getName());
-		assertEquals(WorkType.TASK.toString(), simpleSequentialWorkFlowDefinition.getWorks().get(1).getWorkType());
+		assertEquals(WorkType.TASK.toString(),
+				simpleSequentialWorkFlowDefinition.getWorks().get(1).getWorkType().toString());
 		assertTrue(CollectionUtils.isEmpty(simpleSequentialWorkFlowDefinition.getWorks().get(1).getWorks()));
 		assertNull(simpleSequentialWorkFlowDefinition.getWorks().get(1).getProcessingType());
 		assertNotNull(simpleSequentialWorkFlowDefinition.getWorks().get(1).getParameters());

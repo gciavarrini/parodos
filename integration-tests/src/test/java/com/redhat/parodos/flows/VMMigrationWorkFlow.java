@@ -4,7 +4,6 @@ import java.util.Arrays;
 
 import com.redhat.parodos.flows.base.BaseIntegrationTest;
 import com.redhat.parodos.sdk.api.WorkflowApi;
-import com.redhat.parodos.sdk.api.WorkflowDefinitionApi;
 import com.redhat.parodos.sdk.invoker.ApiException;
 import com.redhat.parodos.sdk.model.ProjectResponseDTO;
 import com.redhat.parodos.sdk.model.WorkFlowRequestDTO;
@@ -13,7 +12,6 @@ import com.redhat.parodos.sdk.model.WorkFlowResponseDTO.WorkStatusEnum;
 import com.redhat.parodos.sdk.model.WorkFlowStatusResponseDTO;
 import com.redhat.parodos.sdk.model.WorkRequestDTO;
 import com.redhat.parodos.sdkutils.SdkUtils;
-import com.redhat.parodos.workflow.consts.WorkFlowConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 
@@ -73,7 +71,7 @@ public class VMMigrationWorkFlow extends BaseIntegrationTest {
 		// Define WorkFlowRequest
 		WorkFlowRequestDTO workFlowRequestDTO = new WorkFlowRequestDTO();
 		workFlowRequestDTO.setProjectId(testProject.getId());
-		workFlowRequestDTO.setWorkFlowName("vmMigrationWorkFlow" + WorkFlowConstants.INFRASTRUCTURE_WORKFLOW);
+		workFlowRequestDTO.setWorkFlowName("vmMigrationWorkFlow_INFRASTRUCTURE_WORKFLOW");
 		workFlowRequestDTO.setWorks(Arrays.asList(work1, work2));
 
 		WorkflowApi workflowApi = new WorkflowApi();
