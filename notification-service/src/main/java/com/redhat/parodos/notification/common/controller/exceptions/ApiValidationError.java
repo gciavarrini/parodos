@@ -1,4 +1,4 @@
-package com.redhat.parodos.notification.controller.advice;
+package com.redhat.parodos.notification.common.controller.exceptions;
 
 import java.beans.Introspector;
 import java.util.Locale;
