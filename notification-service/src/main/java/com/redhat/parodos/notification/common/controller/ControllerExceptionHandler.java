@@ -1,4 +1,4 @@
-package com.redhat.parodos.notification.controller.advice;
+package com.redhat.parodos.notification.common.controller;
 
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -6,6 +6,7 @@ import java.util.Map;
 
 import javax.validation.ConstraintViolationException;
 
+import com.redhat.parodos.notification.controller.advice.ApiValidationError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
