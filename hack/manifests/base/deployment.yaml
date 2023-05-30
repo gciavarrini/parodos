@@ -11,9 +11,17 @@ spec:
       labels:
         app: notification-service
     spec:
+      securityContext:
+        runAsNonRoot: true
       containers:
       - name: notification-service
         image: quay.io/parodos-dev/notification-service:main
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+          seccompProfile:
+            type: RuntimeDefault
         ports:
           - containerPort: 8080
         envFrom:
@@ -41,8 +49,16 @@ spec:
       labels:
         app: workflow-service
     spec:
+      securityContext:
+        runAsNonRoot: true
       containers:
       - name: workflow-service
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+          seccompProfile:
+            type: RuntimeDefault
         image: quay.io/parodos-dev/workflow-service:main
         imagePullPolicy: Always
         ports:

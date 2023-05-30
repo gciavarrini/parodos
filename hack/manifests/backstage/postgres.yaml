@@ -1,4 +1,3 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -14,12 +13,23 @@ spec:
       labels:
         app: postgres
     spec:
+      securityContext:
+        runAsNonRoot: true
       containers:
         - name: postgres
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
           image: postgres:13.2-alpine
           imagePullPolicy: 'IfNotPresent'
           ports:
             - containerPort: 5432
+          env:
+            - name: PGDATA
+              value: /tmp/data
           envFrom:
             - secretRef:
                 name: postgres-secrets
