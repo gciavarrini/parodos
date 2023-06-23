@@ -6,13 +6,13 @@ import java.util.List;
 import com.redhat.parodos.tasks.migrationtoolkit.CreateApplicationTask;
 import com.redhat.parodos.tasks.migrationtoolkit.GetAnalysisTask;
 import com.redhat.parodos.tasks.migrationtoolkit.GetApplicationTask;
+import com.redhat.parodos.tasks.migrationtoolkit.Notifier;
 import com.redhat.parodos.tasks.migrationtoolkit.SubmitAnalysisTask;
 import com.redhat.parodos.workflow.annotation.Assessment;
 import com.redhat.parodos.workflow.annotation.Checker;
 import com.redhat.parodos.workflow.annotation.Parameter;
 import com.redhat.parodos.workflow.option.WorkFlowOption;
 import com.redhat.parodos.workflow.parameter.WorkParameterType;
-import com.redhat.parodos.workflow.task.infrastructure.Notifier;
 import com.redhat.parodos.workflows.workflow.WorkFlow;
 
 import org.springframework.beans.factory.annotation.Value;
